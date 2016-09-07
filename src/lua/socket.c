@@ -51,7 +51,6 @@
 #include <coeio.h> /* coio_getaddrinfo() */
 #include <fiber.h>
 #include "lua/utils.h"
-#include "lua/fiber.h"
 
 extern int coio_wait(int fd, int event, double timeout);
 
@@ -434,9 +433,8 @@ lbox_socket_iowait(struct lua_State *L)
 	if (events == 0)
 		goto usage;
 	int ret = coio_wait(fh, events, timeout);
-	luaL_testcancel(L);
 	const char *result[] = { "", "R", "W", "RW" };
-	assert(ret >= 0 && ret <= (COIO_READ | COIO_WRITE));
+	assert(ret <= (COIO_READ | COIO_WRITE));
 	lua_pushstring(L, result[ret]);
 	return 1;
 
@@ -876,6 +874,21 @@ lbox_socket_recvfrom(struct lua_State *L)
 	return 2;
 }
 
+/**
+ * A special method to abort fiber blocked by iowait() by fid.
+ * Used only by socket:close().
+ */
+static int
+lbox_socket_abort(struct lua_State *L)
+{
+	int fid = lua_tointeger(L, 1);
+	struct fiber *fiber = fiber_find(fid);
+	if (fiber == NULL)
+		return 0;
+	fiber_wakeup(fiber);
+	return 0;
+}
+
 void
 tarantool_lua_socket_init(struct lua_State *L)
 {
@@ -885,6 +898,7 @@ tarantool_lua_socket_init(struct lua_State *L)
 		{ "name",		lbox_socket_soname	},
 		{ "peer",		lbox_socket_peername	},
 		{ "recvfrom",		lbox_socket_recvfrom	},
+		{ "abort",		lbox_socket_abort	},
 		{ "accept",		lbox_socket_accept	},
 		{ NULL,			NULL			}
 	};
