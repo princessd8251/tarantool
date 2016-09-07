@@ -602,7 +602,12 @@ local function eval()
         'loadstring(require("digest").base64_decode([[%s]]))()',
         content
     )
-    remote:console(code)
+
+    local resp = yaml.decode(remote:console(code))[1]
+    if type(resp) == 'table' and resp.error then
+        log.error("Error, while reloading config:")
+        log.info(resp.error)
+    end
 
     return 0
 end
