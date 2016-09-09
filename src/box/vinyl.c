@@ -120,7 +120,7 @@ struct vy_env {
 	struct mempool      cursor_pool;
 };
 
-static inline struct srzone *
+static struct srzone *
 sr_zoneof(struct vy_env *r);
 
 struct vy_buf {
@@ -132,7 +132,7 @@ struct vy_buf {
 	char *e;
 };
 
-static inline void
+static void
 vy_buf_create(struct vy_buf *b)
 {
 	b->s = NULL;
@@ -140,7 +140,7 @@ vy_buf_create(struct vy_buf *b)
 	b->e = NULL;
 }
 
-static inline void
+static void
 vy_buf_destroy(struct vy_buf *b)
 {
 	if (unlikely(b->s == NULL))
@@ -151,22 +151,22 @@ vy_buf_destroy(struct vy_buf *b)
 	b->e = NULL;
 }
 
-static inline size_t
+static size_t
 vy_buf_size(struct vy_buf *b) {
 	return b->e - b->s;
 }
 
-static inline size_t
+static size_t
 vy_buf_used(struct vy_buf *b) {
 	return b->p - b->s;
 }
 
-static inline size_t
+static size_t
 vy_buf_unused(struct vy_buf *b) {
 	return b->e - b->p;
 }
 
-static inline int
+static int
 vy_buf_ensure(struct vy_buf *b, size_t size)
 {
 	if (likely(b->e - b->p >= (ptrdiff_t)size))
@@ -196,13 +196,13 @@ vy_buf_ensure(struct vy_buf *b, size_t size)
 	return 0;
 }
 
-static inline void
+static void
 vy_buf_advance(struct vy_buf *b, size_t size)
 {
 	b->p += size;
 }
 
-static inline int
+static int
 vy_buf_add(struct vy_buf *b, void *buf, size_t size)
 {
 	int rc = vy_buf_ensure(b, size);
@@ -213,13 +213,13 @@ vy_buf_add(struct vy_buf *b, void *buf, size_t size)
 	return 0;
 }
 
-static inline int
+static int
 vy_buf_in(struct vy_buf *b, void *v) {
 	assert(b->s != NULL);
 	return (char*)v >= b->s && (char*)v < b->p;
 }
 
-static inline void*
+static void*
 vy_buf_at(struct vy_buf *b, int size, int i) {
 	return b->s + size * i;
 }
@@ -243,13 +243,13 @@ vy_quota_delete(struct vy_quota*);
 static void
 vy_quota_enable(struct vy_quota*);
 
-static inline int64_t
+static int64_t
 vy_quota_used(struct vy_quota *q)
 {
 	return q->used;
 }
 
-static inline int
+static int
 vy_quota_used_percent(struct vy_quota *q)
 {
 	if (q->limit == 0)
@@ -277,14 +277,14 @@ struct ssrq {
 	struct ssrqq *q;
 };
 
-static inline void
+static void
 ss_rqinitnode(struct ssrqnode *n) {
 	rlist_create(&n->link);
 	n->q = UINT32_MAX;
 	n->v = 0;
 }
 
-static inline int
+static int
 ss_rqinit(struct ssrq *q, uint32_t range, uint32_t count)
 {
 	q->range_count = count + 1 /* zero */;
@@ -307,7 +307,7 @@ ss_rqinit(struct ssrq *q, uint32_t range, uint32_t count)
 	return 0;
 }
 
-static inline void
+static void
 ss_rqfree(struct ssrq *q)
 {
 	if (q->q) {
@@ -316,7 +316,7 @@ ss_rqfree(struct ssrq *q)
 	}
 }
 
-static inline void
+static void
 ss_rqadd(struct ssrq *q, struct ssrqnode *n, uint32_t v)
 {
 	uint32_t pos;
@@ -339,7 +339,7 @@ ss_rqadd(struct ssrq *q, struct ssrqnode *n, uint32_t v)
 	p->count++;
 }
 
-static inline void
+static void
 ss_rqdelete(struct ssrq *q, struct ssrqnode *n)
 {
 	struct ssrqq *p = &q->q[n->q];
@@ -359,7 +359,7 @@ ss_rqdelete(struct ssrq *q, struct ssrqnode *n)
 	}
 }
 
-static inline void
+static void
 ss_rqupdate(struct ssrq *q, struct ssrqnode *n, uint32_t v)
 {
 	if (likely(n->q != UINT32_MAX))
@@ -367,7 +367,7 @@ ss_rqupdate(struct ssrq *q, struct ssrqnode *n, uint32_t v)
 	ss_rqadd(q, n, v);
 }
 
-static inline struct ssrqnode*
+static struct ssrqnode*
 ss_rqprev(struct ssrq *q, struct ssrqnode *n)
 {
 	int pos;
@@ -413,7 +413,7 @@ struct vy_filter {
 	char priv[90];
 };
 
-static inline int
+static int
 vy_filter_create(struct vy_filter *c, struct vy_filterif *ci,
 	       enum vy_filter_op op, ...)
 {
@@ -426,25 +426,25 @@ vy_filter_create(struct vy_filter *c, struct vy_filterif *ci,
 	return rc;
 }
 
-static inline int
+static int
 vy_filter_destroy(struct vy_filter *c)
 {
 	return c->i->destroy(c);
 }
 
-static inline int
+static int
 vy_filter_start(struct vy_filter *c, struct vy_buf *dest)
 {
 	return c->i->start(c, dest);
 }
 
-static inline int
+static int
 vy_filter_next(struct vy_filter *c, struct vy_buf *dest, char *buf, int size)
 {
 	return c->i->next(c, dest, buf, size);
 }
 
-static inline int
+static int
 vy_filter_complete(struct vy_filter *c, struct vy_buf *dest)
 {
 	return c->i->complete(c, dest);
@@ -454,7 +454,7 @@ static struct vy_filterif vy_filterif_lz4;
 
 static struct vy_filterif vy_filterif_zstd;
 
-static inline struct vy_filterif*
+static struct vy_filterif*
 vy_filter_of(char *name)
 {
 	if (strcmp(name, "lz4") == 0)
@@ -487,7 +487,7 @@ struct vy_bufiter {
 	void *v;
 };
 
-static inline void
+static void
 vy_bufiter_open(struct vy_bufiter *bi, struct vy_buf *buf, int vsize)
 {
 	bi->buf = buf;
@@ -497,13 +497,13 @@ vy_bufiter_open(struct vy_bufiter *bi, struct vy_buf *buf, int vsize)
 		bi->v = NULL;
 }
 
-static inline int
+static int
 vy_bufiter_has(struct vy_bufiter *bi)
 {
 	return bi->v != NULL;
 }
 
-static inline void*
+static void*
 vy_bufiterref_get(struct vy_bufiter *bi)
 {
 	if (unlikely(bi->v == NULL))
@@ -511,7 +511,7 @@ vy_bufiterref_get(struct vy_bufiter *bi)
 	return *(void**)bi->v;
 }
 
-static inline void
+static void
 vy_bufiter_next(struct vy_bufiter *bi)
 {
 	if (unlikely(bi->v == NULL))
@@ -529,7 +529,7 @@ struct vy_avg {
 	char sz[32];
 };
 
-static inline void
+static void
 vy_avg_update(struct vy_avg *a, uint32_t v)
 {
 	a->count++;
@@ -541,7 +541,7 @@ vy_avg_update(struct vy_avg *a, uint32_t v)
 		a->max = v;
 }
 
-static inline void
+static void
 vy_avg_prepare(struct vy_avg *a)
 {
 	snprintf(a->sz, sizeof(a->sz), "%"PRIu32" %"PRIu32" %.1f",
@@ -928,7 +928,7 @@ struct vy_stat {
 	struct vy_avg    cursor_ops;
 };
 
-static inline struct vy_stat *
+static struct vy_stat *
 vy_stat_new()
 {
 	struct vy_stat *s = calloc(1, sizeof(*s));
@@ -939,13 +939,13 @@ vy_stat_new()
 	return s;
 }
 
-static inline void
+static void
 vy_stat_delete(struct vy_stat *s)
 {
 	free(s);
 }
 
-static inline void
+static void
 vy_stat_prepare(struct vy_stat *s)
 {
 	vy_avg_prepare(&s->get_read_disk);
@@ -963,7 +963,7 @@ struct vy_stat_get {
 	uint64_t read_latency;
 };
 
-static inline void
+static void
 vy_stat_get(struct vy_stat *s, const struct vy_stat_get *statget)
 {
 	s->get++;
@@ -972,7 +972,7 @@ vy_stat_get(struct vy_stat *s, const struct vy_stat_get *statget)
 	vy_avg_update(&s->get_latency, statget->read_latency);
 }
 
-static inline void
+static void
 vy_stat_tx(struct vy_stat *s, uint64_t start, uint32_t count,
 	   uint32_t write_count, bool is_rollback)
 {
@@ -985,7 +985,7 @@ vy_stat_tx(struct vy_stat *s, uint64_t start, uint32_t count,
 	vy_avg_update(&s->tx_latency, diff);
 }
 
-static inline void
+static void
 vy_stat_cursor(struct vy_stat *s, uint64_t start, int ops)
 {
 	uint64_t diff = clock_monotonic64() - start;
@@ -1005,7 +1005,7 @@ struct srzonemap {
 	struct srzone zones[11];
 };
 
-static inline void
+static void
 sr_zonemap_set(struct srzonemap *m, uint32_t percent, struct srzone *z)
 {
 	if (unlikely(percent > 100))
@@ -1016,7 +1016,7 @@ sr_zonemap_set(struct srzonemap *m, uint32_t percent, struct srzone *z)
 	snprintf(m->zones[p].name, sizeof(m->zones[p].name), "%d", percent);
 }
 
-static inline struct srzone*
+static struct srzone*
 sr_zonemap(struct srzonemap *m, uint32_t percent)
 {
 	if (unlikely(percent > 100))
@@ -1054,16 +1054,16 @@ struct vy_tuple {
 	char data[0];
 };
 
-static inline uint32_t
+static uint32_t
 vy_tuple_size(struct vy_tuple *v);
 
 static struct vy_tuple *
 vy_tuple_alloc(uint32_t size);
 
-static inline const char *
+static const char *
 vy_tuple_key_part(const char *tuple_data, uint32_t part_id);
 
-static inline int
+static int
 vy_tuple_compare(const char *tuple_data_a, const char *tuple_data_b,
 		 const struct key_def *key_def);
 
@@ -1086,7 +1086,7 @@ vy_tuple_is_not_found(struct vy_tuple *tuple)
 static struct vy_tuple *
 vy_tuple_extract_key_raw(struct vy_index *index, const char *tuple);
 
-struct PACKED svmergesrc {
+struct svmergesrc {
 	struct vy_iter *i;
 	struct vy_iter src;
 	uint8_t dup;
@@ -1099,7 +1099,7 @@ struct svmerge {
 	struct vy_buf buf;
 };
 
-static inline void
+static void
 sv_mergeinit(struct svmerge *m, struct vy_index *index,
 	     struct key_def *key_def)
 {
@@ -1108,13 +1108,13 @@ sv_mergeinit(struct svmerge *m, struct vy_index *index,
 	m->key_def = key_def;
 }
 
-static inline int
+static int
 sv_mergeprepare(struct svmerge *m, int count)
 {
 	return vy_buf_ensure(&m->buf, sizeof(struct svmergesrc) * count);
 }
 
-static inline void
+static void
 sv_mergefree(struct svmerge *m)
 {
 	struct svmergesrc *beg = (struct svmergesrc *)m->buf.s;
@@ -1124,7 +1124,7 @@ sv_mergefree(struct svmerge *m)
 	vy_buf_destroy(&m->buf);
 }
 
-static inline void
+static void
 sv_mergereset(struct svmerge *m)
 {
 	struct svmergesrc *beg = (struct svmergesrc *)m->buf.s;
@@ -1134,7 +1134,7 @@ sv_mergereset(struct svmerge *m)
 	m->buf.p = m->buf.s;
 }
 
-static inline struct svmergesrc*
+static struct svmergesrc*
 sv_mergeadd(struct svmerge *m, struct vy_iter *i)
 {
 	assert(m->buf.p < m->buf.e);
@@ -1164,14 +1164,14 @@ struct svmergeiter {
 	struct svmergesrc *v;
 };
 
-static inline void
+static void
 sv_mergeiter_dupreset(struct svmergeiter *i, struct svmergesrc *pos)
 {
 	for (struct svmergesrc *src = i->src; src != pos; src++)
 		src->dup = 0;
 }
 
-static inline void
+static void
 sv_mergeiter_next(struct svmergeiter *im)
 {
 	int direction = 0;
@@ -1223,7 +1223,7 @@ sv_mergeiter_next(struct svmergeiter *im)
 	im->v = found_src;
 }
 
-static inline int
+static int
 sv_mergeiter_open(struct svmergeiter *im, struct svmerge *m, enum vy_order o)
 {
 	im->merge = m;
@@ -1235,13 +1235,13 @@ sv_mergeiter_open(struct svmergeiter *im, struct svmerge *m, enum vy_order o)
 	return 0;
 }
 
-static inline int
+static int
 sv_mergeiter_has(struct svmergeiter *im)
 {
 	return im->v != NULL;
 }
 
-static inline struct vy_tuple *
+static struct vy_tuple *
 sv_mergeiter_get(struct svmergeiter *im)
 {
 	if (unlikely(im->v == NULL))
@@ -1249,7 +1249,7 @@ sv_mergeiter_get(struct svmergeiter *im)
 	return vy_iter_get(im->v->i);
 }
 
-static inline uint32_t
+static uint32_t
 sv_mergeisdup(struct svmergeiter *im)
 {
 	assert(im->v != NULL);
@@ -1272,7 +1272,7 @@ static struct vy_tuple *
 vy_apply_upsert(struct vy_tuple *upsert, struct vy_tuple *object,
 		struct vy_index *index, bool suppress_error);
 
-static inline int
+static int
 sv_readiter_upsert(struct svreaditer *i)
 {
 	assert(i->upsert_tuple == NULL);
@@ -1317,7 +1317,7 @@ sv_readiter_upsert(struct svreaditer *i)
 	return 0;
 }
 
-static inline void
+static void
 sv_readiter_next(struct svreaditer *im)
 {
 	if (im->upsert_tuple != NULL) {
@@ -1359,7 +1359,7 @@ sv_readiter_next(struct svreaditer *im)
 	}
 }
 
-static inline void
+static void
 sv_readiter_forward(struct svreaditer *im)
 {
 	if (im->next)
@@ -1378,7 +1378,7 @@ sv_readiter_forward(struct svreaditer *im)
 	}
 }
 
-static inline int
+static int
 sv_readiter_open(struct svreaditer *im, struct svmergeiter *merge,
 		 int64_t vlsn, int save_delete)
 {
@@ -1394,7 +1394,7 @@ sv_readiter_open(struct svreaditer *im, struct svmergeiter *merge,
 	return 0;
 }
 
-static inline void
+static void
 sv_readiter_close(struct svreaditer *im)
 {
 	if (im->upsert_tuple != NULL) {
@@ -1403,7 +1403,7 @@ sv_readiter_close(struct svreaditer *im)
 	}
 }
 
-static inline struct vy_tuple *
+static struct vy_tuple *
 sv_readiter_get(struct svreaditer *im)
 {
 	return im->v;
@@ -1422,7 +1422,7 @@ struct svwriteiter {
 	struct vy_tuple *upsert_tuple;
 };
 
-static inline int
+static int
 sv_writeiter_upsert(struct svwriteiter *i)
 {
 	assert(i->upsert_tuple == NULL);
@@ -1471,7 +1471,7 @@ sv_writeiter_upsert(struct svwriteiter *i)
 	return 0;
 }
 
-static inline void
+static void
 sv_writeiter_next(struct svwriteiter *im)
 {
 	if (im->upsert_tuple != NULL) {
@@ -1541,7 +1541,7 @@ sv_writeiter_next(struct svwriteiter *im)
 	}
 }
 
-static inline int
+static int
 sv_writeiter_open(struct svwriteiter *im, struct svmergeiter *merge,
 		  int64_t vlsn, int save_delete,
 		  int save_upsert)
@@ -1560,7 +1560,7 @@ sv_writeiter_open(struct svwriteiter *im, struct svmergeiter *merge,
 	return 0;
 }
 
-static inline void
+static void
 sv_writeiter_close(struct svwriteiter *im)
 {
 	if (im->upsert_tuple != NULL) {
@@ -1569,19 +1569,19 @@ sv_writeiter_close(struct svwriteiter *im)
 	}
 }
 
-static inline int
+static int
 sv_writeiter_has(struct svwriteiter *im)
 {
 	return im->v != NULL;
 }
 
-static inline struct vy_tuple *
+static struct vy_tuple *
 sv_writeiter_get(struct svwriteiter *im)
 {
 	return im->v;
 }
 
-static inline int
+static int
 sv_writeiter_is_duplicate(struct svwriteiter *im)
 {
 	assert(im->v != NULL);
@@ -1710,7 +1710,7 @@ vy_mem_destroy(struct vy_mem *index)
 	return 0;
 }
 
-static inline int
+static int
 vy_mem_set(struct vy_mem *index, struct vy_tuple *v)
 {
 	/* see struct vy_mem comments */
@@ -2065,7 +2065,7 @@ struct vy_cursor {
 };
 
 
-static inline struct txv *
+static struct txv *
 txv_new(struct vy_index *index, struct vy_tuple *tuple, struct vy_tx *tx)
 {
 	struct txv *v = malloc(sizeof(struct txv));
@@ -2082,14 +2082,14 @@ txv_new(struct vy_index *index, struct vy_tuple *tuple, struct vy_tx *tx)
 	return v;
 }
 
-static inline void
+static void
 txv_delete(struct txv *v)
 {
 	vy_tuple_unref(v->tuple);
 	free(v);
 }
 
-static inline void
+static void
 txv_abort(struct txv *v)
 {
 	v->tx->is_aborted = true;
@@ -2101,8 +2101,8 @@ read_set_cmp(read_set_t *rbtree, struct txv *a, struct txv *b);
 static int
 read_set_key_cmp(read_set_t *rbtree, struct read_set_key *a, struct txv *b);
 
-rb_gen_ext_key(, read_set_, read_set_t, struct txv, in_read_set, read_set_cmp,
-		 struct read_set_key *, read_set_key_cmp);
+rb_gen_ext_key(static inline, read_set_, read_set_t, struct txv, in_read_set,
+	       read_set_cmp, struct read_set_key *, read_set_key_cmp);
 
 static struct txv *
 read_set_search_key(read_set_t *rbtree, char *data, int size, int64_t tsn)
@@ -2208,8 +2208,8 @@ write_set_key_cmp(write_set_t *index, struct write_set_key *a, struct txv *b)
 	return rc;
 }
 
-rb_gen_ext_key(, write_set_, write_set_t, struct txv, in_write_set, write_set_cmp,
-	       struct write_set_key *, write_set_key_cmp);
+rb_gen_ext_key(static inline, write_set_, write_set_t, struct txv, in_write_set,
+	       write_set_cmp, struct write_set_key *, write_set_key_cmp);
 
 static struct txv *
 write_set_search_key(write_set_t *tree, struct vy_index *index, char *data)
@@ -2234,8 +2234,7 @@ tx_tree_cmp(tx_tree_t *rbtree, struct vy_tx *a, struct vy_tx *b)
 	return vy_cmp(a->tsn, b->tsn);
 }
 
-rb_gen(, tx_tree_, tx_tree_t, struct vy_tx, tree_node,
-       tx_tree_cmp);
+rb_gen(static inline, tx_tree_, tx_tree_t, struct vy_tx, tree_node, tx_tree_cmp);
 
 struct tx_manager {
 	tx_tree_t tree;
@@ -2337,7 +2336,7 @@ vy_tx_track(struct vy_tx *tx, struct vy_index *index,
 	return 0;
 }
 
-static inline void
+static void
 tx_manager_end(struct tx_manager *m, struct vy_tx *tx)
 {
 	bool was_oldest = tx == tx_tree_first(&m->tree);
@@ -2382,7 +2381,7 @@ struct vy_page {
 	uint32_t refs;
 };
 
-static inline void
+static void
 vy_page_init(struct vy_page *p, struct vy_page_info *info, char *data)
 {
 	p->info = info;
@@ -2390,14 +2389,14 @@ vy_page_init(struct vy_page *p, struct vy_page_info *info, char *data)
 	p->refs = 1;
 }
 
-static inline struct vy_tuple_info*
+static struct vy_tuple_info*
 sd_pagev(struct vy_page *p, uint32_t pos)
 {
 	assert(pos < p->info->count);
 	return (struct vy_tuple_info*)(p->data + sizeof(struct vy_tuple_info) * pos);
 }
 
-static inline void*
+static void*
 sd_pagepointer(struct vy_page *p, struct vy_tuple_info *v)
 {
 	assert((sizeof(struct vy_tuple_info) * p->info->count) + v->offset <=
@@ -2406,13 +2405,13 @@ sd_pagepointer(struct vy_page *p, struct vy_tuple_info *v)
 	       + v->offset;
 }
 
-static inline char *
+static char *
 vy_run_index_min_key(struct vy_run_index *i, struct vy_page_info *p)
 {
 	return i->minmax.s + p->min_key_offset;
 }
 
-static inline void
+static void
 vy_run_index_init(struct vy_run_index *i)
 {
 	vy_buf_create(&i->pages);
@@ -2420,14 +2419,14 @@ vy_run_index_init(struct vy_run_index *i)
 	memset(&i->info, 0, sizeof(i->info));
 }
 
-static inline void
+static void
 vy_run_index_destroy(struct vy_run_index *i)
 {
 	vy_buf_destroy(&i->pages);
 	vy_buf_destroy(&i->minmax);
 }
 
-static inline struct vy_page_info *
+static struct vy_page_info *
 vy_run_index_get_page(struct vy_run_index *i, int pos)
 {
 	assert(pos >= 0);
@@ -2436,13 +2435,13 @@ vy_run_index_get_page(struct vy_run_index *i, int pos)
 		vy_buf_at(&i->pages, sizeof(struct vy_page_info), pos);
 }
 
-static inline struct vy_page_info *
+static struct vy_page_info *
 vy_run_index_first_page(struct vy_run_index *i)
 {
 	return vy_run_index_get_page(i, 0);
 }
 
-static inline uint32_t
+static uint32_t
 vy_run_index_total(struct vy_run_index *i)
 {
 	if (unlikely(i->pages.s == NULL))
@@ -2450,7 +2449,7 @@ vy_run_index_total(struct vy_run_index *i)
 	return i->info.total;
 }
 
-static inline uint32_t
+static uint32_t
 vy_run_index_size(struct vy_run_index *i)
 {
 	return sizeof(i->info) +
@@ -2463,7 +2462,7 @@ vy_index_dump_range_index(struct vy_index *index);
 static int
 vy_index_checkpoint_range_index(struct vy_index *index, int64_t lsn);
 
-static inline struct vy_run *
+static struct vy_run *
 vy_run_new()
 {
 	struct vy_run *run = (struct vy_run *)malloc(sizeof(struct vy_run));
@@ -2479,7 +2478,7 @@ vy_run_new()
 	return run;
 }
 
-static inline void
+static void
 vy_run_delete(struct vy_run *run)
 {
 	vy_run_index_destroy(&run->index);
@@ -2703,28 +2702,28 @@ static struct vy_range *vy_range_new(struct key_def *key_def);
 static int vy_range_create(struct vy_range*, struct vy_index*);
 static int vy_range_delete(struct vy_range*, int);
 
-static inline void
+static void
 vy_range_lock(struct vy_range *range)
 {
 	assert(! (range->flags & VY_LOCK));
 	range->flags |= VY_LOCK;
 }
 
-static inline void
+static void
 vy_range_unlock(struct vy_range *range)
 {
 	assert((range->flags & VY_LOCK) > 0);
 	range->flags &= ~VY_LOCK;
 }
 
-static inline struct vy_mem *
+static struct vy_mem *
 vy_range_rotate(struct vy_range *range)
 {
 	range->flags |= VY_ROTATE;
 	return &range->i0;
 }
 
-static inline void
+static void
 vy_range_unrotate(struct vy_range *range)
 {
 	assert((range->flags & VY_ROTATE) > 0);
@@ -2734,7 +2733,7 @@ vy_range_unrotate(struct vy_range *range)
 	vy_mem_create(&range->i1, range->i0.key_def);
 }
 
-static inline struct vy_mem *
+static struct vy_mem *
 vy_range_mem(struct vy_range *range)
 {
 	if (range->flags & VY_ROTATE)
@@ -2742,7 +2741,7 @@ vy_range_mem(struct vy_range *range)
 	return &range->i0;
 }
 
-static inline struct vy_mem *
+static struct vy_mem *
 vy_range_index_priority(struct vy_range *range, struct vy_mem **second)
 {
 	if (unlikely(range->flags & VY_ROTATE)) {
@@ -2753,14 +2752,14 @@ vy_range_index_priority(struct vy_range *range, struct vy_mem **second)
 	return &range->i0;
 }
 
-static inline int
+static int
 vy_range_cmp(struct vy_range *range, void *key, struct key_def *key_def)
 {
 	assert(range->min_key != NULL);
 	return vy_tuple_compare(range->min_key->data, key, key_def);
 }
 
-static inline int
+static int
 vy_range_cmpnode(struct vy_range *n1, struct vy_range *n2, struct key_def *key_def)
 {
 	if (n1 == n2)
@@ -2769,7 +2768,7 @@ vy_range_cmpnode(struct vy_range *n1, struct vy_range *n2, struct key_def *key_d
 	return vy_tuple_compare(n1->min_key->data, n2->min_key->data, key_def);
 }
 
-static inline uint64_t
+static uint64_t
 vy_range_size(struct vy_range *range)
 {
 	uint64_t size = 0;
@@ -2801,9 +2800,9 @@ static int
 vy_range_tree_key_cmp(vy_range_tree_t *rbtree,
 		    struct vy_range_tree_key *a, struct vy_range *b);
 
-rb_gen_ext_key(, vy_range_tree_, vy_range_tree_t, struct vy_range, tree_node,
-		 vy_range_tree_cmp, struct vy_range_tree_key *,
-		 vy_range_tree_key_cmp);
+rb_gen_ext_key(static inline, vy_range_tree_, vy_range_tree_t, struct vy_range,
+	       tree_node, vy_range_tree_cmp, struct vy_range_tree_key *,
+	       vy_range_tree_key_cmp);
 
 struct vy_range *
 vy_range_tree_free_cb(vy_range_tree_t *t, struct vy_range *range, void *arg)
@@ -2843,7 +2842,7 @@ vy_range_tree_key_cmp(vy_range_tree_t *rbtree,
 	return (-vy_range_cmp(b, a->data, key_def));
 }
 
-static inline void
+static void
 vy_index_delete(struct vy_index *index);
 
 struct vy_rangeiter {
@@ -2854,7 +2853,7 @@ struct vy_rangeiter {
 	int key_size;
 };
 
-static inline void
+static void
 vy_rangeiter_open(struct vy_rangeiter *itr, struct vy_index *index,
 		  enum vy_order order, char *key, int key_size)
 {
@@ -2894,13 +2893,13 @@ vy_rangeiter_open(struct vy_rangeiter *itr, struct vy_index *index,
 	assert(itr->cur_range != NULL);
 }
 
-static inline struct vy_range *
+static struct vy_range *
 vy_rangeiter_get(struct vy_rangeiter *ii)
 {
 	return ii->cur_range;
 }
 
-static inline void
+static void
 vy_rangeiter_next(struct vy_rangeiter *ii)
 {
 	switch (ii->order) {
@@ -3360,7 +3359,7 @@ vy_range_redistribute(struct vy_index *index, struct vy_range *range,
 	return 0;
 }
 
-static inline void
+static void
 vy_range_redistribute_set(struct vy_index *index, uint64_t now, struct vy_tuple *v)
 {
 	/* match range */
@@ -3424,7 +3423,7 @@ vy_range_splitfree(struct rlist *result)
 	return 0;
 }
 
-static inline int
+static int
 vy_range_split(struct vy_index *index,
 	       struct svmergeiter *merge_iter,
 	       uint64_t  size_node,
@@ -3489,7 +3488,7 @@ vy_range_new(struct key_def *key_def)
 	return range;
 }
 
-static inline int
+static int
 vy_range_close(struct vy_range *range, int gc)
 {
 	int rcret = 0;
@@ -3510,7 +3509,7 @@ vy_range_close(struct vy_range *range, int gc)
 	return rcret;
 }
 
-static inline int
+static int
 vy_range_recover(struct vy_range *range)
 {
 	int fd = range->fd;
@@ -3588,7 +3587,7 @@ vy_range_create(struct vy_range *range, struct vy_index *index)
 	return 0;
 }
 
-static inline void
+static void
 vy_range_delete_runs(struct vy_range *range)
 {
 	struct vy_run *p = range->run;
@@ -4087,7 +4086,7 @@ struct vy_task {
 	struct stailq_entry link;
 };
 
-static inline struct vy_task *
+static struct vy_task *
 vy_task_new(struct mempool *pool, struct vy_index *index,
 	    const struct vy_task_ops *ops)
 {
@@ -4103,7 +4102,7 @@ vy_task_new(struct mempool *pool, struct vy_index *index,
 	return task;
 }
 
-static inline void
+static void
 vy_task_delete(struct mempool *pool, struct vy_task *task)
 {
 	if (task->index) {
@@ -4519,7 +4518,7 @@ vy_scheduler_del_index(struct vy_scheduler *scheduler, struct vy_index *index)
 	return 0;
 }
 
-static inline int
+static int
 vy_scheduler_peek_checkpoint(struct vy_scheduler *scheduler,
 			     struct vy_index *index, int64_t checkpoint_lsn,
 			     struct vy_task **ptask)
@@ -4546,7 +4545,7 @@ vy_scheduler_peek_checkpoint(struct vy_scheduler *scheduler,
 	return 0; /* nothing to do */
 }
 
-static inline int
+static int
 vy_scheduler_peek_dump(struct vy_scheduler *scheduler, struct vy_index *index,
 		       struct vy_task **ptask)
 {
@@ -4569,7 +4568,7 @@ vy_scheduler_peek_dump(struct vy_scheduler *scheduler, struct vy_index *index,
 	return 0; /* nothing to do */
 }
 
-static inline int
+static int
 vy_scheduler_peek_age(struct vy_scheduler *scheduler, struct vy_index *index,
 		      uint32_t max_age, struct vy_task **ptask)
 {
@@ -4599,7 +4598,7 @@ vy_scheduler_peek_age(struct vy_scheduler *scheduler, struct vy_index *index,
 	return 0; /* nothing to do */
 }
 
-static inline int
+static int
 vy_scheduler_peek_compact(struct vy_scheduler *scheduler,
 			  struct vy_index *index, uint32_t run_count,
 			  struct vy_task **ptask)
@@ -4624,7 +4623,7 @@ vy_scheduler_peek_compact(struct vy_scheduler *scheduler,
 	return 0; /* nothing to do */
 }
 
-static inline int
+static int
 vy_scheduler_peek_shutdown(struct vy_scheduler *scheduler,
 			   struct vy_index *index, struct vy_task **ptask)
 {
@@ -5126,7 +5125,7 @@ static void vy_conf_delete(struct vy_conf *c)
 	free(c);
 }
 
-static inline struct srzone *
+static struct srzone *
 sr_zoneof(struct vy_env *env)
 {
 	int p = vy_quota_used_percent(env->quota);
@@ -5139,7 +5138,7 @@ vy_index_read(struct vy_index*, struct vy_tuple*, enum vy_order order,
 
 /** {{{ Introspection */
 
-static inline struct vy_info_node *
+static struct vy_info_node *
 vy_info_append(struct vy_info_node *root, const char *key)
 {
 	assert(root->childs_n < root->childs_cap);
@@ -5150,7 +5149,7 @@ vy_info_append(struct vy_info_node *root, const char *key)
 	return node;
 }
 
-static inline void
+static void
 vy_info_append_u32(struct vy_info_node *root, const char *key, uint32_t value)
 {
 	struct vy_info_node *node = vy_info_append(root, key);
@@ -5158,7 +5157,7 @@ vy_info_append_u32(struct vy_info_node *root, const char *key, uint32_t value)
 	node->val_type = VINYL_U32;
 }
 
-static inline void
+static void
 vy_info_append_u64(struct vy_info_node *root, const char *key, uint64_t value)
 {
 	struct vy_info_node *node = vy_info_append(root, key);
@@ -5166,7 +5165,7 @@ vy_info_append_u64(struct vy_info_node *root, const char *key, uint64_t value)
 	node->val_type = VINYL_U64;
 }
 
-static inline void
+static void
 vy_info_append_str(struct vy_info_node *root, const char *key,
 		   const char *value)
 {
@@ -5175,7 +5174,7 @@ vy_info_append_str(struct vy_info_node *root, const char *key,
 	node->val_type = VINYL_STRING;
 }
 
-static inline int
+static int
 vy_info_reserve(struct vy_info *info, struct vy_info_node *node, int size)
 {
 	node->childs = region_alloc(&info->allocator,
@@ -5190,7 +5189,7 @@ vy_info_reserve(struct vy_info *info, struct vy_info_node *node, int size)
 	return 0;
 }
 
-static inline int
+static int
 vy_info_append_global(struct vy_info *info, struct vy_info_node *root)
 {
 	struct vy_info_node *node = vy_info_append(root, "vinyl");
@@ -5201,7 +5200,7 @@ vy_info_append_global(struct vy_info *info, struct vy_info_node *root)
 	return 0;
 }
 
-static inline int
+static int
 vy_info_append_memory(struct vy_info *info, struct vy_info_node *root)
 {
 	struct vy_info_node *node = vy_info_append(root, "memory");
@@ -5213,7 +5212,7 @@ vy_info_append_memory(struct vy_info *info, struct vy_info_node *root)
 	return 0;
 }
 
-static inline int
+static int
 vy_info_append_compaction(struct vy_info *info, struct vy_info_node *root)
 {
 	int childs_cnt = 0;
@@ -5236,7 +5235,7 @@ vy_info_append_compaction(struct vy_info *info, struct vy_info_node *root)
 	return 0;
 }
 
-static inline int
+static int
 vy_info_append_scheduler(struct vy_info *info, struct vy_info_node *root)
 {
 	struct vy_info_node *node = vy_info_append(root, "scheduler");
@@ -5250,7 +5249,7 @@ vy_info_append_scheduler(struct vy_info *info, struct vy_info_node *root)
 	return 0;
 }
 
-static inline int
+static int
 vy_info_append_performance(struct vy_info *info, struct vy_info_node *root)
 {
 	struct vy_info_node *node = vy_info_append(root, "performance");
@@ -5278,7 +5277,7 @@ vy_info_append_performance(struct vy_info *info, struct vy_info_node *root)
 	return 0;
 }
 
-static inline int
+static int
 vy_info_append_metric(struct vy_info *info, struct vy_info_node *root)
 {
 	struct vy_info_node *node = vy_info_append(root, "metric");
@@ -5289,7 +5288,7 @@ vy_info_append_metric(struct vy_info *info, struct vy_info_node *root)
 	return 0;
 }
 
-static inline int
+static int
 vy_info_append_indices(struct vy_info *info, struct vy_info_node *root)
 {
 	struct vy_index *o;
@@ -5789,7 +5788,7 @@ error_1:
 	return NULL;
 }
 
-static inline void
+static void
 vy_index_delete(struct vy_index *index)
 {
 	read_set_iter(&index->read_set, NULL, read_set_delete_cb, NULL);
@@ -5820,7 +5819,7 @@ enum {
 	VY_TUPLE_KEY_MISSING = UINT32_MAX,
 };
 
-static inline uint32_t
+static uint32_t
 vy_tuple_size(struct vy_tuple *v)
 {
 	return sizeof(struct vy_tuple) + v->size;
@@ -6035,7 +6034,7 @@ vy_tuple_unref(struct vy_tuple *tuple)
 /**
  * Extract key from tuple by part_id
  */
-static inline const char *
+static const char *
 vy_tuple_key_part(const char *tuple_data, uint32_t part_id)
 {
 	uint32_t *offsets = (uint32_t *) tuple_data;
@@ -6063,7 +6062,7 @@ vy_tuple_key_is_full(const char *tuple_data, const struct key_def *key_def)
 /**
  * Compare two tuples
  */
-static inline int
+static int
 vy_tuple_compare(const char *tuple_data_a, const char *tuple_data_b,
 		 const struct key_def *key_def)
 {
@@ -6251,7 +6250,7 @@ check_key:
 
 /* }}} Upsert */
 
-static inline void
+static void
 vy_tx_set(struct vy_tx *tx, struct vy_index *index,
 	    struct vy_tuple *tuple, uint8_t flags)
 {
